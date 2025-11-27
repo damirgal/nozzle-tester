@@ -1,14 +1,18 @@
 const int relayPin = 13;        // Пин, к которому подключено реле
 const int buttonPin = 3;        // Пин, к которому подключена кнопка
 
-// Массив возможных значений для blinkInterval_off
-const int intervals_off[] = {100, 1000, 5000};
-const int numIntervals = 3;     // Количество вариантов интервалов
+// Массивы возможных значений для интервалов
+const int intervals_on[] = {2, 4, 6};
+const int intervals_off[] = {10, 20, 30, 40};
+const int numIntervalsOn = 3;   // Количество вариантов для ON
+const int numIntervalsOff = 4;  // Количество вариантов для OFF
 
-const int blinkInterval_on = 2; // Интервал включения
-int blinkInterval_off = 100;    // Текущий интервал выключения
+int blinkInterval_on = 2;       // Текущий интервал включения
+int blinkInterval_off = 10;    // Текущий интервал выключения
 
-int currentIntervalIndex = 0;   // Текущий индекс в массиве интервалов
+int currentIntervalIndex_on = 0;   // Текущий индекс для ON
+int currentIntervalIndex_off = 0;  // Текущий индекс для OFF
+
 int lastButtonState = HIGH;     // Предыдущее состояние кнопки
 unsigned long lastPressTime = 0; // Время последнего нажатия
 
@@ -19,14 +23,15 @@ void setup() {
   digitalWrite(relayPin, HIGH); // Выключаем реле (если оно нормально-замкнуто)
   
   Serial.begin(9600);           // Инициализируем Serial для отладки
-  Serial.println("Running. Interval OFF: " + String(blinkInterval_off) + " ms");
+  Serial.println("=== СКЕТЧ ЗАПУЩЕН ===");
+  printCurrentState();
 }
 
 void loop() {
   // Обработка нажатия кнопки
   handleButton();
   
-  // Управление реле (согласно вашей логике)
+  // Управление реле
   digitalWrite(relayPin, HIGH);  // Включаем реле (лампочка гаснет)
   delay(blinkInterval_on);       // Ждём
   digitalWrite(relayPin, LOW);   // Выключаем реле (лампочка загорается)
@@ -50,29 +55,51 @@ void handleButton() {
 }
 
 void changeInterval() {
-  // Переходим к следующему интервалу (по кругу)
-  currentIntervalIndex++;
+  // Сначала перебираем все значения intervals_off
+  currentIntervalIndex_off = (currentIntervalIndex_off + 1) % numIntervalsOff;
+  blinkInterval_off = intervals_off[currentIntervalIndex_off];
   
-  // Если дошли до конца массива, начинаем сначала
-  if (currentIntervalIndex >= numIntervals) {
-    currentIntervalIndex = 0;
+  // Если дошли до начала intervals_off, переходим к следующему intervals_on
+  if (currentIntervalIndex_off == 0) {
+    currentIntervalIndex_on = (currentIntervalIndex_on + 1) % numIntervalsOn;
+    blinkInterval_on = intervals_on[currentIntervalIndex_on];
   }
   
-  blinkInterval_off = intervals_off[currentIntervalIndex];
-  
-  // Выводим информацию в Serial
-  Serial.print("Interval OFF change: ");
+  printCurrentState();
+  indicateChange();
+}
+
+void printCurrentState() {
+  Serial.println("-----------------------------------");
+  Serial.print("Комбинация: ");
+  Serial.print(currentIntervalIndex_on + 1);
+  Serial.print(" из ");
+  Serial.print(numIntervalsOn);
+  Serial.print(" (ON) | ");
+  Serial.print(currentIntervalIndex_off + 1);
+  Serial.print(" из ");
+  Serial.print(numIntervalsOff);
+  Serial.println(" (OFF)");
+  Serial.print("blinkInterval_on: ");
+  Serial.print(blinkInterval_on);
+  Serial.println(" мс");
+  Serial.print("blinkInterval_off: ");
   Serial.print(blinkInterval_off);
-  Serial.print(" ms (index: ");
-  Serial.print(currentIntervalIndex);
-  Serial.println(")");
+  Serial.println(" мс");
+  Serial.println("-----------------------------------");
+}
+
+void indicateChange() {
+  // Индикация миганием - количество миганий соответствует индексу ON + 1
+  int blinkCount = currentIntervalIndex_on + 2;
   
-  // Мигаем реле 3 раза для индикации изменения
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < blinkCount; i++) {
     digitalWrite(relayPin, LOW);
-    delay(150);
+    delay(500);
     digitalWrite(relayPin, HIGH);
-    delay(150);
+    if (i < blinkCount - 1) { // Не делать паузу после последнего мигания
+      delay(500);
+    }
   }
   
   // Возвращаемся к нормальной работе
