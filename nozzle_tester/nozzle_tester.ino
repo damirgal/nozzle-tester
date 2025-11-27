@@ -1,5 +1,5 @@
 const int relayPin = 13;        // Пин, к которому подключено реле
-const int buttonPin = 2;        // Пин, к которому подключена кнопка
+const int buttonPin = 3;        // Пин, к которому подключена кнопка
 
 // Массив возможных значений для blinkInterval_off
 const int intervals_off[] = {100, 1000, 5000};
@@ -19,7 +19,7 @@ void setup() {
   digitalWrite(relayPin, HIGH); // Выключаем реле (если оно нормально-замкнуто)
   
   Serial.begin(9600);           // Инициализируем Serial для отладки
-  Serial.println("Скетч запущен. Текущий интервал OFF: " + String(blinkInterval_off) + " мс");
+  Serial.println("Running. Interval OFF: " + String(blinkInterval_off) + " ms");
 }
 
 void loop() {
@@ -61,9 +61,9 @@ void changeInterval() {
   blinkInterval_off = intervals_off[currentIntervalIndex];
   
   // Выводим информацию в Serial
-  Serial.print("Интервал OFF изменён: ");
+  Serial.print("Interval OFF change: ");
   Serial.print(blinkInterval_off);
-  Serial.print(" мс (индекс: ");
+  Serial.print(" ms (index: ");
   Serial.print(currentIntervalIndex);
   Serial.println(")");
   
